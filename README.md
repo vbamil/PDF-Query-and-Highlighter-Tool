@@ -20,57 +20,57 @@ This application leverages state-of-the-art AI technologies to provide an intuit
 
 ## Project Structure
 
-env/: Python virtual environment files.
+- env/: Python virtual environment files.
 
-highlighted/: Stores highlighted versions of the processed PDF documents.
+- highlighted/: Stores highlighted versions of the processed PDF documents.
 
-pdfjs/: Contains resources for rendering PDF documents in the web interface.
+- pdfjs/: Contains resources for rendering PDF documents in the web interface.
 
-build/: JavaScript and map files for handling PDFs.
+- build/: JavaScript and map files for handling PDFs.
 
-web/: Viewer resources such as HTML, CSS, and images.
+- web/: Viewer resources such as HTML, CSS, and images.
 
-static/: Contains static resources like CSS, JavaScript, and images.
+- static/: Contains static resources like CSS, JavaScript, and images.
 
-templates/: HTML templates used for rendering the web pages.
+- templates/: HTML templates used for rendering the web pages.
 
-highlight.html: Template for viewing highlighted PDFs.
+- highlight.html: Template for viewing highlighted PDFs.
 
-index.html: Main page for uploading and interacting with PDFs.
+- index.html: Main page for uploading and interacting with PDFs.
 
-uploads/: Stores uploaded PDF files.
+- uploads/: Stores uploaded PDF files.
 
-vector_db/: Directory for storing vectorized data for quick retrieval.
+- vector_db/: Directory for storing vectorized data for quick retrieval.
 
-vector_store/: Stores data related to vector embeddings.
+- vector_store/: Stores data related to vector embeddings.
 
-.env: Environment variables such as API keys.
+- .env: Environment variables such as API keys.
 
-app.py: Main Flask application for handling routes and API requests.
+- app.py: Main Flask application for handling routes and API requests.
 
-pdf_highlighter.py: Script for processing PDFs and highlighting relevant sections.
+- pdf_highlighter.py: Script for processing PDFs and highlighting relevant sections.
 
-pdfjs-dist.zip: Compressed package for PDF.js used in the project.
+- pdfjs-dist.zip: Compressed package for PDF.js used in the project.
 
 ## Requirements
 
-Python 3.8+
+- Python 3.8+
 
-Flask
+- Flask
 
-pdf2image
+- pdf2image
 
-openai
+- openai
 
-PyMuPDF
+- PyMuPDF
 
-langchain
+- langchain
 
-langchain-community
+- langchain-community
 
-chromadb
+- chromadb
 
-python-dotenv
+- python-dotenv
 
 ## Setup Instructions
 
@@ -118,19 +118,19 @@ The application will highlight relevant sections of the document that correspond
 
 ## Technologies Used
 
-Flask: For serving the web application.
+- Flask: For serving the web application.
 
-OpenAI API: To provide intelligent responses to user queries.
+- OpenAI API: To provide intelligent responses to user queries.
 
-FAISS: For efficient similarity search and information retrieval.
+- FAISS: For efficient similarity search and information retrieval.
 
-PyMuPDF: To extract and manipulate PDF content.
+- PyMuPDF: To extract and manipulate PDF content.
 
-pdf2image: Convert PDF pages to images for processing.
+- pdf2image: Convert PDF pages to images for processing.
 
-Langchain: Text processing and chunking.
+- Langchain: Text processing and chunking.
 
-PDF.js: To render PDFs in the browser for highlighting.
+- PDF.js: To render PDFs in the browser for highlighting.
 
 ## Contributing
 
