@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Question Answering Application</title>
+    <script src="/static/pdf.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        #pdfViewer {
+            position: relative;
+            border: 1px solid #ccc;
+            width: 50%;
+            height: 80vh;
+            overflow-y: scroll;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #controlPanel {
+            width: 45%;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #nextHighlight {
+            margin-top: 10px;
+        }
+
+        #resultMessage {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        #askQuestion {
+            margin-top: 20px;
+        }
+
+        #answer {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .question-card {
+            background-color: #e9ecef;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .chunk-button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 5px;
+            transition: background-color 0.3s ease;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .chunk-button:hover {
+            background-color: #218838;
+        }
+
+        #question {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        #chunk-content-display {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            min-height: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>PDF Question Answering Application</h2>
+
+    <!-- Upload PDF Form at the top of the page -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="file">Upload a PDF:</label>
+            <input type="file" name="file" id="file" accept="application/pdf" required>
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+
+    <div id="container">
+        <!-- PDF Viewer -->
+        <div id="pdfViewer"></div>
+
+        <!-- Control Panel -->
+        <div id="controlPanel">
+            <!-- Ask Question Form -->
+            <div id="askQuestion">
+                <h3>Ask a Question about the PDF</h3>
+                <label for="question">Enter Your Question:</label>
+                <textarea id="question" name="question" rows="4" required></textarea>
+                <button id="askButton">Ask</button>
+                <div id="questionAnswers"></div>
+                <div id="chunk-content-display"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let highlightedPages = [];
+        let currentHighlightIndex = 0;
+
+        // Set up pdf.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/pdf.worker.min.js';
+
+        // Function to render PDF using pdf.js
+        async function renderPDF(url, scrollToPage = null, highlightContent = null) {
+            try {
+                const loadingTask = pdfjsLib.getDocument(url);
+                const pdf = await loadingTask.promise;
+
+                const viewer = document.getElementById('pdfViewer');
+                viewer.innerHTML = ''; // Clear existing content
+
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+
+                    const canvasWrapper = document.createElement('div');
+                    canvasWrapper.style.position = 'relative';
+                    viewer.appendChild(canvasWrapper);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.classList.add('pdf-page');
+                    canvas.setAttribute('data-page-number', pageNum);
+                    canvasWrapper.appendChild(canvas);
+
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    const context = canvas.getContext('2d');
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+                    // Scroll to the page that contains the highlighted text, if specified
+                    if (scrollToPage !== null && pageNum === scrollToPage) {
+                        canvasWrapper.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center' // Align the page at the center
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error rendering PDF:', error);
+                $('#resultMessage').text('Error rendering PDF. Please check the console for more details.');
+            }
+        }
+
+        $(document).ready(function () {
+            const filename = "{{ filename }}";
+            const pdfPath = '/uploads/' + filename;
+
+            // Load the original PDF when the page loads
+            if (filename) {
+                renderPDF(pdfPath);
+            }
+
+            // Handle question asking via AJAX
+            $('#askButton').on('click', function (e) {
+                e.preventDefault();
+
+                const question = $('#question').val();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/ask_question',
+                    data: { question: question, filename: filename },
+                    success: function (response) {
+                        let answerText = `<div class="question-card"><strong>Question:</strong> ${question}<br><strong>Answer:</strong> ${response.answer}</div>`;
+                        let chunksText = '<div class="chunk-section"><strong>Retrieved Chunks:</strong><br>';
+                        response.chunks.forEach((chunk, index) => {
+                            chunksText += `<button class="chunk-button" data-page="${response.highlightedPages[index]}" data-content="${chunk.content}">Chunk ${index + 1}</button>`;
+                        });
+                        chunksText += '</div>';
+                        $('#questionAnswers').html(answerText + chunksText);
+
+                        if (response.highlightedPages && response.new_pdf) {
+                            // Render the highlighted PDF with retrieved chunks
+                            renderPDF('/highlighted/' + response.new_pdf.split('/').pop(), response.highlightedPages[0]);
+                            highlightedPages = response.highlightedPages;
+                            currentHighlightIndex = 0;
+                        }
+                    },
+                    error: function () {
+                        $('#questionAnswers').append('<div class="question-card">An error occurred while answering the question.</div>');
+                    }
+                });
+            });
+
+            // Scroll to the highlighted chunk when the chunk button is clicked
+            $('#questionAnswers').on('click', '.chunk-button', function () {
+                const pageToScroll = $(this).data('page');
+                const contentToHighlight = $(this).data('content');
+                renderPDF('/highlighted/' + filename.replace('.pdf', '_highlighted_from_chunks.pdf'), pageToScroll);
+
+                // Show the chunk content in a separate display area without moving other buttons
+                $('#chunk-content-display').html(`<div class="chunk-content">${contentToHighlight}</div>`);
+            });
+        });
+    </script>
+</body>
+</html>

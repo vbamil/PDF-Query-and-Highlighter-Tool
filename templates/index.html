@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask a Question about the PDF</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h2>Ask a Question about the PDF</h2>
+
+    <!-- Question Form -->
+    <form id="questionForm">
+        <label for="question">Enter Your Question:</label>
+        <input type="text" id="question" name="question" required>
+        <button type="submit">Ask</button>
+    </form>
+
+    <p id="answerResult"></p>
+
+    <script>
+        $(document).ready(function () {
+            $('#questionForm').on('submit', function (e) {
+                e.preventDefault();  // Prevent form from submitting normally
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/ask',
+                    data: $('#questionForm').serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            $('#answerResult').html(`<strong>Answer:</strong> ${response.answer}<br><br><strong>Details:</strong> ${JSON.stringify(response.metadata)}`);
+                        } else {
+                            $('#answerResult').text('Failed to get the answer.');
+                        }
+                    },
+                    error: function () {
+                        $('#answerResult').text('An error occurred while fetching the answer.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
